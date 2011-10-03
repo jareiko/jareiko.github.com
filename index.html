@@ -1,3 +1,26 @@
-<html>
-Content
-</html>
+<!DOCTYPE html>
+<head>
+<title>jareiko.github.com</title>
+</head>
+<body>
+<div id="log"></div>
+</body>
+<script>
+
+var log = document.getElementById('log');
+
+document.body.onkeydown = function(e) {
+  var line = document.createElement('div');
+  window.console.log(e);
+  line.innerHTML = 'onkeydown( keyCode = ' + e.keyCode + ' )';
+  log.appendChild(line);
+};
+
+document.body.onkeypress = function(e) {
+  var line = document.createElement('div');
+  window.console.log(e);
+  line.innerHTML = 'onkeypress( keyCode = ' + e.keyCode + ' )';
+  log.appendChild(line);
+};
+
+</script>
