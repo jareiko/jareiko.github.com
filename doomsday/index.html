@@ -1,0 +1,509 @@
+
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>End of the world</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background-color: #000000;
+				margin: 0px;
+				overflow: hidden;
+				font-family:Monospace;
+				font-size:13px;
+				text-align:center;
+				font-weight: bold;
+				text-align:center;
+			}
+
+			a {
+				color:#0078ff;
+			}
+
+			#info {
+				color:#fff;
+				position: absolute;
+				top: 0px; width: 100%;
+				padding: 5px;
+				z-index:100;
+			}
+
+			#stats { position: absolute; top:0; left: 0 }
+			#stats #fps { background: transparent !important }
+			#stats #fps #fpsText { color: #888 !important }
+			#stats #fps #fpsGraph { display: none }
+		</style>
+	</head>
+
+	<body>
+		<script src="vendor/three.min.js"></script>
+		<script src="vendor/ShaderGodRays.js"></script>
+
+		<script src="vendor/Detector.js"></script>
+		<script src="vendor/stats.min.js"></script>
+
+    <!--
+		<div id="info">
+			End of the world
+		</div>
+    -->
+
+
+		<script>
+
+			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+			var container, stats;
+			var camera, scene, renderer, materialDepth, materialScene;
+
+			var treeMesh, sphereMesh;
+
+			var projector = new THREE.Projector();
+
+			var sunPosition = new THREE.Vector3( 0, 0, -1000 );
+			var screenSpacePosition = new THREE.Vector3();
+
+			var mouseX = 0, mouseY = 0, buttons = 0;
+
+			var windowHalfX = window.innerWidth / 2;
+			var windowHalfY = window.innerHeight / 2;
+
+			var margin = 0;
+			var height = window.innerHeight - 2 * margin;
+
+			var postprocessing = { enabled : true };
+
+			var orbitRadius = 200;
+
+			var bgColor = 0x110005;
+			var sunColor = 0xff8800;
+
+			var particles;
+			var geoAsteroid;
+			var asteroids = [];
+			var bullets, bulletGeom, nextBullet = 0;
+
+			init();
+			animate();
+
+			function init() {
+
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
+
+				//
+
+				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / height, 1, 3000 );
+
+				scene = new THREE.Scene();
+
+				//
+
+				// todo - try with fog
+				scene.fog = new THREE.Fog( sunColor, 0, 4000 );
+				// THREE.ColorUtils.adjustHSV( scene.fog.color, 0.02, -0.15, -0.65 );
+
+				materialDepth = new THREE.MeshDepthMaterial();
+
+				materialScene = new THREE.MeshBasicMaterial( { color: 0x000000, shading: THREE.FlatShading } );
+
+				// sphere
+
+				var geo = new THREE.IcosahedronGeometry( 20, 0 );
+				sphereMesh = new THREE.Mesh( geo, materialScene );
+
+				geoAsteroid = new THREE.IcosahedronGeometry( 20, 1 );
+
+				//scene.add( sphereMesh );
+
+        // particles
+
+        var geometry = new THREE.Geometry();
+
+        var i;
+				for ( i = 0; i < 10000; i ++ ) {
+					var vertex = new THREE.Vector3();
+					vertex.x = Math.random() * 2000 - 1000;
+					vertex.y = Math.random() * 2000 - 1000;
+					vertex.z = Math.random() * 2000 - 2000;
+
+					geometry.vertices.push( vertex );
+				}
+
+				var pMaterial = new THREE.ParticleBasicMaterial( { color: 0x000000, size: 3 } );
+
+				particleSystems = [
+				  new THREE.ParticleSystem( geometry, pMaterial ),
+				  new THREE.ParticleSystem( geometry, pMaterial ),
+				  new THREE.ParticleSystem( geometry, pMaterial )
+				];
+				particleSystems[1].position.z = -2000;
+				particleSystems[2].position.z = -4000;
+
+				particles = new THREE.Object3D();
+				particles.add( particleSystems[0] );
+				particles.add( particleSystems[1] );
+				particles.add( particleSystems[2] );
+
+				scene.add( particles );
+
+        bulletGeom = new THREE.Geometry();
+        for (i=0; i < 20; ++i)
+          bulletGeom.vertices.push(new THREE.Vector3(0,0,1));
+        var bMaterial = new THREE.ParticleBasicMaterial( { color: 0x00ff00, size: 10 } );
+				bullets = new THREE.ParticleSystem(bulletGeom, bMaterial);
+				scene.add(bullets);
+
+				//
+
+				renderer = new THREE.WebGLRenderer( { antialias: false } );
+				renderer.setSize( window.innerWidth, height );
+				container.appendChild( renderer.domElement );
+
+				renderer.sortObjects = false;
+
+				renderer.autoClear = false;
+				renderer.setClearColorHex( bgColor, 1 );
+
+				renderer.domElement.style.position = 'absolute';
+				renderer.domElement.style.top = margin + "px";
+				renderer.domElement.style.left = "0px";
+
+				//
+
+				stats = new Stats();
+				container.appendChild( stats.domElement );
+
+				//
+
+				document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+				document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+				document.addEventListener( 'mouseup', onDocumentMouseUp, false );
+				document.addEventListener( 'touchstart', onDocumentTouchStart, false );
+				document.addEventListener( 'touchmove', onDocumentTouchMove, false );
+
+				//
+
+				initPostprocessing();
+
+			}
+
+			//
+
+			function onDocumentMouseDown(event) {
+				buttons |= Math.pow(2, event.button);
+			}
+
+			function onDocumentMouseUp(event) {
+        buttons &= ~Math.pow(2, event.button);
+			}
+
+			function onDocumentMouseMove( event ) {
+
+				mouseX = event.clientX - windowHalfX;
+				mouseY = event.clientY - windowHalfY;
+
+			}
+
+			function onDocumentTouchStart( event ) {
+
+				if ( event.touches.length === 1 ) {
+
+					event.preventDefault();
+
+					mouseX = event.touches[ 0 ].pageX - windowHalfX;
+					mouseY = event.touches[ 0 ].pageY - windowHalfY;
+
+				}
+
+			}
+
+			function onDocumentTouchMove( event ) {
+
+				if ( event.touches.length === 1 ) {
+
+					event.preventDefault();
+
+					mouseX = event.touches[ 0 ].pageX - windowHalfX;
+					mouseY = event.touches[ 0 ].pageY - windowHalfY;
+
+				}
+
+			}
+
+			//
+
+			function initPostprocessing() {
+
+				postprocessing.scene = new THREE.Scene();
+
+				postprocessing.camera = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2,  height / 2, height / - 2, -10000, 10000 );
+				postprocessing.camera.position.z = 100;
+
+				postprocessing.scene.add( postprocessing.camera );
+
+				var pars = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat };
+				postprocessing.rtTextureColors = new THREE.WebGLRenderTarget( window.innerWidth, height, pars );
+
+				// Switching the depth formats to luminance from rgb doesn't seem to work. I didn't
+				// investigate further for now.
+				// pars.format = THREE.LuminanceFormat;
+
+				// I would have this quarter size and use it as one of the ping-pong render
+				// targets but the aliasing causes some temporal flickering
+
+				postprocessing.rtTextureDepth = new THREE.WebGLRenderTarget( window.innerWidth, height, pars );
+
+				// Aggressive downsize god-ray ping-pong render targets to minimize cost
+
+				var w = window.innerWidth / 4.0;
+				var h = height / 4.0;
+				postprocessing.rtTextureGodRays1 = new THREE.WebGLRenderTarget( w, h, pars );
+				postprocessing.rtTextureGodRays2 = new THREE.WebGLRenderTarget( w, h, pars );
+
+				// god-ray shaders
+
+				var godraysGenShader = THREE.ShaderGodRays[ "godrays_generate" ];
+				postprocessing.godrayGenUniforms = THREE.UniformsUtils.clone( godraysGenShader.uniforms );
+				postprocessing.materialGodraysGenerate = new THREE.ShaderMaterial( {
+
+					uniforms: postprocessing.godrayGenUniforms,
+					vertexShader: godraysGenShader.vertexShader,
+					fragmentShader: godraysGenShader.fragmentShader
+
+				} );
+
+				var godraysCombineShader = THREE.ShaderGodRays[ "godrays_combine" ];
+				postprocessing.godrayCombineUniforms = THREE.UniformsUtils.clone( godraysCombineShader.uniforms );
+				postprocessing.materialGodraysCombine = new THREE.ShaderMaterial( {
+
+					uniforms: postprocessing.godrayCombineUniforms,
+					vertexShader: godraysCombineShader.vertexShader,
+					fragmentShader: godraysCombineShader.fragmentShader
+
+				} );
+
+				var godraysFakeSunShader = THREE.ShaderGodRays[ "godrays_fake_sun" ];
+				postprocessing.godraysFakeSunUniforms = THREE.UniformsUtils.clone( godraysFakeSunShader.uniforms );
+				postprocessing.materialGodraysFakeSun = new THREE.ShaderMaterial( {
+
+					uniforms: postprocessing.godraysFakeSunUniforms,
+					vertexShader: godraysFakeSunShader.vertexShader,
+					fragmentShader: godraysFakeSunShader.fragmentShader
+
+				} );
+
+				postprocessing.godraysFakeSunUniforms.bgColor.value.setHex( bgColor );
+				postprocessing.godraysFakeSunUniforms.sunColor.value.setHex( sunColor );
+
+				postprocessing.godrayCombineUniforms.fGodRayIntensity.value = 0.9;
+
+				postprocessing.quad = new THREE.Mesh( new THREE.PlaneGeometry( window.innerWidth, height ), postprocessing.materialGodraysGenerate );
+				postprocessing.quad.position.z = -9900;
+				postprocessing.scene.add( postprocessing.quad );
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate, renderer.domElement );
+
+				render();
+				stats.update();
+
+			}
+
+      var ammo = 0;
+
+			function render() {
+
+				var time = Date.now();
+
+				//sphereMesh.position.x = orbitRadius * Math.cos( time );
+				//sphereMesh.position.z = orbitRadius * Math.sin( time ) - 100;
+
+        var lb = bulletGeom.vertices.length;
+        var bullet;
+        ++ammo;
+        if (ammo % 3 == 0 && buttons & 1) {
+        	bullet = bulletGeom.vertices[nextBullet];
+        	nextBullet = (nextBullet + 1) % lb;
+        	bullet.copy(camera.position);
+        	bullet.y -= 5;
+        	if (ammo % 2 == 0)
+        		bullet.x += 10;
+        	else
+        		bullet.x -= 10;
+        }
+
+        var i, tmp;
+        //var src = new THREE.Vector3(0,0,200);
+        for (i = 0; i < lb; ++i) {
+        	bullet = bulletGeom.vertices[i];
+        	bullet.z -= 20;
+        }
+
+        bulletGeom.verticesNeedUpdate = true;
+
+				if (Math.random() < 0.1) {
+					var ast = new THREE.Mesh( geoAsteroid, materialScene );
+					ast.position.set(Math.random()*200-100,
+					                 Math.random()*200-100,
+					                 -2000);
+					scene.add(ast);
+					asteroids.push(ast);
+				}
+
+        var i, i2, dead, tmpVec = new THREE.Vector3();
+				for (i = 0; i < asteroids.length; ++i) {
+					asteroids[i].position.z += 10;
+					dead = asteroids[i].position.z > 0;
+          for (i2 = 0; i2 < lb; ++i2) {
+          	bullet = bulletGeom.vertices[i2];
+          	tmpVec.sub(bullet, asteroids[i].position);
+          	if (tmpVec.length() < 22) dead = true;
+          }
+					if (dead) {
+						scene.remove(asteroids[i]);
+						asteroids.splice(i--, 1);
+					}
+				}
+
+				sphereMesh.position.x += (  mouseX - sphereMesh.position.x ) * 0.1;
+				sphereMesh.position.y += ( -mouseY - sphereMesh.position.y ) * 0.1;
+
+        var amt = time / 1000;
+				particles.position.z = (amt - Math.floor(amt)) * 2000;
+
+
+				camera.position.x += ( mouseX - camera.position.x ) * 0.04;
+				camera.position.y += ( - ( mouseY ) - camera.position.y ) * 0.04;
+
+				//camera.lookAt( scene.position );
+
+				if ( postprocessing.enabled ) {
+
+					// Find the screenspace position of the sun
+
+					screenSpacePosition.copy( sunPosition );
+					projector.projectVector( screenSpacePosition, camera );
+
+					screenSpacePosition.x = ( screenSpacePosition.x + 1 ) / 2;
+					screenSpacePosition.y = ( screenSpacePosition.y + 1 ) / 2;
+
+					// Give it to the god-ray and sun shaders
+
+					postprocessing.godrayGenUniforms[ "vSunPositionScreenSpace" ].value.x = screenSpacePosition.x;
+					postprocessing.godrayGenUniforms[ "vSunPositionScreenSpace" ].value.y = screenSpacePosition.y;
+
+					postprocessing.godraysFakeSunUniforms[ "vSunPositionScreenSpace" ].value.x = screenSpacePosition.x;
+					postprocessing.godraysFakeSunUniforms[ "vSunPositionScreenSpace" ].value.y = screenSpacePosition.y;
+
+					// -- Draw sky and sun --
+
+					// Clear colors and depths, will clear to sky color
+
+					renderer.clearTarget( postprocessing.rtTextureColors, true, true, false );
+
+					// Sun render. Runs a shader that gives a brightness based on the screen
+					// space distance to the sun. Not very efficient, so i make a scissor
+					// rectangle around the suns position to avoid rendering surrounding pixels.
+
+					var sunsqH = 0.74 * height; // 0.74 depends on extent of sun from shader
+					var sunsqW = 0.74 * height; // both depend on height because sun is aspect-corrected
+
+					screenSpacePosition.x *= window.innerWidth;
+					screenSpacePosition.y *= height;
+
+					renderer.setScissor( screenSpacePosition.x - sunsqW / 2, screenSpacePosition.y - sunsqH / 2, sunsqW, sunsqH );
+					renderer.enableScissorTest( true );
+
+					postprocessing.godraysFakeSunUniforms[ "fAspect" ].value = window.innerWidth / height;
+
+					postprocessing.scene.overrideMaterial = postprocessing.materialGodraysFakeSun;
+					renderer.render( postprocessing.scene, postprocessing.camera, postprocessing.rtTextureColors );
+
+					renderer.enableScissorTest( false );
+
+					// -- Draw scene objects --
+
+					// Colors
+
+					scene.overrideMaterial = null;
+					renderer.render( scene, camera, postprocessing.rtTextureColors );
+
+					// Depth
+
+					scene.overrideMaterial = materialDepth;
+					renderer.render( scene, camera, postprocessing.rtTextureDepth, true );
+
+					// -- Render god-rays --
+
+					// Maximum length of god-rays (in texture space [0,1]X[0,1])
+
+					var filterLen = 1.0;
+
+					// Samples taken by filter
+
+					var TAPS_PER_PASS = 6.0;
+
+					// Pass order could equivalently be 3,2,1 (instead of 1,2,3), which
+					// would start with a small filter support and grow to large. however
+					// the large-to-small order produces less objectionable aliasing artifacts that
+					// appear as a glimmer along the length of the beams
+
+					// pass 1 - render into first ping-pong target
+
+					var pass = 1.0;
+					var stepLen = filterLen * Math.pow( TAPS_PER_PASS, -pass );
+
+					postprocessing.godrayGenUniforms[ "fStepSize" ].value = stepLen;
+					postprocessing.godrayGenUniforms[ "tInput" ].value = postprocessing.rtTextureDepth;
+
+					postprocessing.scene.overrideMaterial = postprocessing.materialGodraysGenerate;
+
+					renderer.render( postprocessing.scene, postprocessing.camera, postprocessing.rtTextureGodRays2 );
+
+					// pass 2 - render into second ping-pong target
+
+					pass = 2.0;
+					stepLen = filterLen * Math.pow( TAPS_PER_PASS, -pass );
+
+					postprocessing.godrayGenUniforms[ "fStepSize" ].value = stepLen;
+					postprocessing.godrayGenUniforms[ "tInput" ].value = postprocessing.rtTextureGodRays2;
+
+					renderer.render( postprocessing.scene, postprocessing.camera, postprocessing.rtTextureGodRays1  );
+
+					// pass 3 - 1st RT
+
+					pass = 3.0;
+					stepLen = filterLen * Math.pow( TAPS_PER_PASS, -pass );
+
+					postprocessing.godrayGenUniforms[ "fStepSize" ].value = stepLen;
+					postprocessing.godrayGenUniforms[ "tInput" ].value = postprocessing.rtTextureGodRays1;
+
+					renderer.render( postprocessing.scene, postprocessing.camera , postprocessing.rtTextureGodRays2  );
+
+					// final pass - composite god-rays onto colors
+
+					postprocessing.godrayCombineUniforms["tColors"].value = postprocessing.rtTextureColors;
+					postprocessing.godrayCombineUniforms["tGodRays"].value = postprocessing.rtTextureGodRays2;
+
+					postprocessing.scene.overrideMaterial = postprocessing.materialGodraysCombine;
+
+					renderer.render( postprocessing.scene, postprocessing.camera );
+					postprocessing.scene.overrideMaterial = null;
+
+				} else {
+
+					renderer.clear();
+					renderer.render( scene, camera );
+
+				}
+
+			}
+
+		</script>
+	</body>
+</html>
