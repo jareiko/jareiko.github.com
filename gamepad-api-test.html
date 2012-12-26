@@ -66,7 +66,14 @@
           gamepads = getGamepads();
           for (i = 0; i < gamepads.length; ++i) {
             gamepad = gamepads[i];
-            if (!gamepad) continue;
+            if (!gamepad) {
+              row = doc.createElement("tr");
+              cell = doc.createElement("td");
+              cell.innerHTML = "gamepad " + i + " absent";
+              row.appendChild(cell);
+              table.appendChild(row);
+              continue;
+            }
             row = doc.createElement("tr");
             cell = doc.createElement("td");
             cell.innerHTML = "gamepad " + i + " axes";
