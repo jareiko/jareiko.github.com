@@ -18,18 +18,13 @@
     <p>
       Connect a gamepad and press a button on it to activate. This page polls 10 times per second.
     </p>
-    <table id="gamepads">
-    </table>
 
-    <table id="events">
-    </table>
-
-    <div id="blah">
+    <div id="methods">
     </div>
 
     <script>
       var doc = document;
-      var blah = doc.getElementById("blah");
+      var methods = doc.getElementById("methods");
 
       var rgb = function(r, g, b) {
         return (
@@ -50,13 +45,13 @@
       }
 
       var showGamepads = function(getterName) {
-        blah.appendChild(doc.createElement("hr"));
+        methods.appendChild(doc.createElement("hr"));
         var title = doc.createElement("h3");
         var TIMEOUT = 100;
         title.textContent = getterName;
-        blah.appendChild(title);
+        methods.appendChild(title);
         var table = doc.createElement("table");
-        blah.appendChild(table);
+        methods.appendChild(table);
 
         var getGamepads = function() {
           return navigator[getterName] && navigator[getterName]() || [];
