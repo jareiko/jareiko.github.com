@@ -1,0 +1,112 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Gamepad API Test</title>
+
+    <style>
+      td {
+        border: 1px solid #ddd;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Gamepad API Test</h1>
+    <p>
+      Latest draft spec is <a href="https://dvcs.w3.org/hg/gamepad/raw-file/default/gamepad.html">here</a>.
+    </p>
+    <p>
+      Connect a gamepad and press a button on it to activate.
+    </p>
+    <table id="gamepads">
+    </table>
+
+    <table id="events">
+    </table>
+
+    <div id="blah">
+    </div>
+
+    <script>
+      var doc = document;
+      var blah = doc.getElementById("blah");
+
+      var rgb = function(r, g, b) {
+        return (
+          Math.min(255, Math.max(0, Math.floor(b * 256))) +
+          Math.min(255, Math.max(0, Math.floor(g * 256))) * 256 +
+          Math.min(255, Math.max(0, Math.floor(r * 256))) * 65536);
+      }
+
+      var fmtNumber = function(number) {
+        var color = rgb(
+          1 - 0.5 * number,
+          1 + 0.5 * number,
+          1 - 0.5 * Math.abs(number)
+        ).toString(16);
+        var repr = number.toFixed(3);
+        var spacer = repr[0] === "-" ? "" : "+";
+        return "<code style=\"background:#" + color + "\">" + spacer + repr + "</code>";
+      }
+
+      var showGamepads = function(getterName) {
+        var title = doc.createElement("h3");
+        var TIMEOUT = 100;
+        title.textContent = "setInterval(" + getterName + "(), " + TIMEOUT + ")";
+        blah.appendChild(title);
+        var table = doc.createElement("table");
+        blah.appendChild(table);
+
+        var getGamepads = function() {
+          return navigator[getterName] && navigator[getterName]() || [];
+        }
+
+        setInterval(function() {
+          var i, j, x, gamepads, gamepad, row, cell;
+          table.innerHTML = "";
+          gamepads = getGamepads();
+          for (i = 0; i < gamepads.length; ++i) {
+            gamepad = gamepads[i];
+            if (!gamepad) continue;
+            row = doc.createElement("tr");
+            cell = doc.createElement("td");
+            cell.innerHTML = "gamepad " + i + " axes";
+            row.appendChild(cell);
+            for (j = 0; j < gamepad.axes.length; ++j) {
+              cell = doc.createElement("td");
+              cell.innerHTML = j + ": " + fmtNumber(gamepad.axes[j]);
+              row.appendChild(cell);
+            }
+            table.appendChild(row);
+            row = doc.createElement("tr");
+            cell = doc.createElement("td");
+            cell.innerHTML = "gamepad " + i + " buttons";
+            row.appendChild(cell);
+            for (j = 0; j < gamepad.buttons.length; ++j) {
+              cell = doc.createElement("td");
+              cell.innerHTML = j + ": " + fmtNumber(gamepad.buttons[j]);
+              row.appendChild(cell);
+            }
+            table.appendChild(row);
+          }
+        }, TIMEOUT);
+      };
+
+      showGamepads('webkitGetGamepads');
+
+      var gamepads = function() {
+        var nav = navigator;
+        return
+          nav.getGamepads && nav.getGamepads() || nav.gamepads ||
+          nav.mozGetGamepads && nav.mozGetGamepads() || nav.mozGamepads ||
+          nav.webkitGetGamepads && nav.webkitGetGamepads() || nav.webkitGamepads ||
+          [];
+      };
+
+      var onGamepadConnected = function(event) {
+        console.log(event);
+      };
+      window.addEventListener("WebkitGamepadConnected", onGamepadConnected);
+    </script>
+
+  </body>
+</html>
