@@ -78,6 +78,15 @@
             }
             row = doc.createElement("tr");
             cell = doc.createElement("td");
+            cell.innerHTML = "gamepad " + i + " id";
+            row.appendChild(cell);
+            cell = doc.createElement("td");
+            cell.colSpan = 10;
+            cell.innerHTML = "<code>" + gamepad.id + "</code>";
+            row.appendChild(cell);
+            table.appendChild(row);
+            row = doc.createElement("tr");
+            cell = doc.createElement("td");
             cell.innerHTML = "gamepad " + i + " axes";
             row.appendChild(cell);
             for (j = 0; j < gamepad.axes.length; ++j) {
