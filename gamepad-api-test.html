@@ -46,21 +46,25 @@
 
       var showGamepads = function(getterName) {
         methods.appendChild(doc.createElement("hr"));
-        var title = doc.createElement("h3");
+        var title = doc.createElement("h2");
         var TIMEOUT = 100;
-        title.textContent = getterName;
+        title.innerHTML = "<code>" + getterName + "</code>";
         methods.appendChild(title);
+
+        if (!navigator[getterName]) {
+          var p = doc.createElement("p");
+          p.textContent = "Method not supported by this browser."
+          methods.appendChild(p);
+          return;
+        }
+
         var table = doc.createElement("table");
         methods.appendChild(table);
-
-        var getGamepads = function() {
-          return navigator[getterName] && navigator[getterName]() || [];
-        }
 
         setInterval(function() {
           var i, j, x, gamepads, gamepad, row, cell;
           table.innerHTML = "";
-          gamepads = getGamepads();
+          gamepads = navigator[getterName]();
           for (i = 0; i < gamepads.length; ++i) {
             gamepad = gamepads[i];
             if (!gamepad) {
