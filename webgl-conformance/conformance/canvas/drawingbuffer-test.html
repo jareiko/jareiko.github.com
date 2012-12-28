@@ -1,13 +1,35 @@
 <!--
-Copyright (c) 2011 The Chromium Authors. All rights reserved.
-Use of this source code is governed by a BSD-style license that can be
-found in the LICENSE file.
- -->
+
+/*
+** Copyright (c) 2012 The Khronos Group Inc.
+**
+** Permission is hereby granted, free of charge, to any person obtaining a
+** copy of this software and/or associated documentation files (the
+** "Materials"), to deal in the Materials without restriction, including
+** without limitation the rights to use, copy, modify, merge, publish,
+** distribute, sublicense, and/or sell copies of the Materials, and to
+** permit persons to whom the Materials are furnished to do so, subject to
+** the following conditions:
+**
+** The above copyright notice and this permission notice shall be included
+** in all copies or substantial portions of the Materials.
+**
+** THE MATERIALS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+** EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+** MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+** IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+** CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+** TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+** MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
+*/
+
+-->
+
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
-<title>WebGL Canvas Conformance Tests</title>
+<title>WebGL Canvas.drawingBufferWidth,drawingBufferHeight Conformance Tests</title>
 <link rel="stylesheet" href="../../resources/js-test-style.css"/>
 <script src="../../resources/js-test-pre.js"></script>
 <script src="../resources/webgl-test.js"></script>
@@ -16,129 +38,95 @@ found in the LICENSE file.
 <body>
 <div id="description"></div>
 <div id="console"></div>
-
-<script id="vshader" type="x-shader/x-vertex">
-attribute vec4 vPosition;
-void main()
-{
-  gl_Position = vPosition;
-}
-</script>
-
-<script id="fshader" type="x-shader/x-fragment">
-void main()
-{
-  gl_FragColor = vec4(1.0,0.0,0.0,1.0);
-}
-</script>
-
 <script>
-function fail(x,y, buf, shouldBe)
-{
-  var i = (y*50+x) * 4;
-  var reason = "pixel at ("+x+","+y+") is ("+buf[i]+","+buf[i+1]+","+buf[i+2]+","+buf[i+3]+"), should be "+shouldBe;
-  testFailed(reason);
-}
-
-function pass()
-{
-  testPassed("drawing is correct");
-}
-
-function drawTriangleTest(gl)
-{
-  gl.viewport(0, 0, 50, 50);
-  var vertexObject = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, vertexObject);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([ 0,0.5,0, -0.5,-0.5,0, 0.5,-0.5,0 ]), gl.STATIC_DRAW);
-  gl.enableVertexAttribArray(0);
-  gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
-
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-  gl.drawArrays(gl.TRIANGLES, 0, 3);
-
-  var buf = new Uint8Array(50 * 50 * 4);
-  gl.readPixels(0, 0, 50, 50, gl.RGBA, gl.UNSIGNED_BYTE, buf);
-
-  // Test several locations
-  // First line should be all black
-  for (var i = 0; i < 50; ++i) {
-    if (buf[i*4] != 0 || buf[i*4+1] != 0 || buf[i*4+2] != 0 || buf[i*4+3] != 255) {
-      fail(i, 0, buf, "(0,0,0,255)");
-      return;
-    }
-  }
-  // Line 15 should be red for at least 10 red pixels starting 20 pixels in
-  var offset = (15*50+20) * 4;
-  for (var i = 0; i < 10; ++i) {
-    if (buf[offset+i*4] != 255 || buf[offset+i*4+1] != 0 || buf[offset+i*4+2] != 0 || buf[offset+i*4+3] != 255) {
-      fail(20 + i, 15, buf, "(255,0,0,255)");
-      return;
-    }
-  }
-  // Last line should be all black
-  offset = (49*50) * 4;
-  for (var i = 0; i < 50; ++i) {
-    if (buf[offset+i*4] != 0 || buf[offset+i*4+1] != 0 || buf[offset+i*4+2] != 0 || buf[offset+i*4+3] != 255) {
-      fail(i, 49, buf, "(0,0,0,255)");
-      return;
-    }
-  }
-}
-
-description("This test ensures WebGL implementations correctly implement drawingbufferWidth/Height.");
-
+description();
 debug("");
 
-var wtu = WebGLTestUtils;
-var err;
-var maxSize;
-var gl = wtu.create3DContext();
-if (!gl) {
-  testFailed("context does not exist");
-} else {
-  testPassed("context exists");
+function getMaxViewportDimensions() {
+  // create a fresh canvas. This canvas will be discarded
+  // after exiting this function.
+  var canvas = document.createElement("canvas");
+  gl = wtu.create3DContext(canvas, {antialias: false});
+  if (!gl) {
+    testFailed("context does not exist");
+    return [0, 0];
+  } else {
+    testPassed("context exists");
 
-  gl.program = createProgram(gl, "vshader", "fshader", ["vPosition"]);
-  shouldBeNonNull("gl.program");
-  gl.useProgram(gl.program);
-  gl.enable(gl.DEPTH_TEST);
-  gl.disable(gl.BLEND);
-  gl.clearColor(0, 0, 0, 1);
-  gl.clearDepth(1);
-  shouldBe('gl.getError()', 'gl.NO_ERROR');
-
-  debug("");
-  debug("Checking drawingBufferWidth/drawingBufferHeight");
-
-  // Check that a canvas with no width or height is 300x150 pixels
-  shouldBe('gl.drawingBufferWidth', 'gl.canvas.width');
-  shouldBe('gl.drawingBufferHeight', 'gl.canvas.height');
-
-  // Check that changing the canvas size to something too large falls back to reasonable values.
-  maxSize = gl.getParameter(gl.MAX_VIEWPORT_DIMS);
-  shouldBeTrue('maxSize[0] > 0');
-  shouldBeTrue('maxSize[1] > 0');
-
-  // debug("MAX_VIEWPORT_DIMS = " + maxSize[0] + "x" + maxSize[1]);
-  gl.canvas.width = maxSize[0] * 4;
-  gl.canvas.height = maxSize[1] * 4;
-  shouldBeTrue('gl.drawingBufferWidth > 0');
-  shouldBeTrue('gl.drawingBufferHeight > 0');
-  shouldBeTrue('gl.drawingBufferWidth <= maxSize[0]');
-  shouldBeTrue('gl.drawingBufferHeight <= maxSize[1]');
-  shouldBe('gl.getError()', 'gl.NO_ERROR');
-
-  debug("");
-  debug("Checking scaling up then back down to 50/50, drawing still works.");
-  gl.canvas.width = 50;
-  gl.canvas.height = 50;
-  shouldBeTrue('gl.drawingBufferWidth == 50');
-  shouldBeTrue('gl.drawingBufferHeight == 50');
-  shouldBe('gl.getError()', 'gl.NO_ERROR');
-  drawTriangleTest(gl);
-  shouldBe('gl.getError()', 'gl.NO_ERROR');
+    // For a default size canvas these should be equal.
+    // WebGL contexts are not allowed to change the size of the drawingBuffer
+    // for things like hi-res displays.
+    shouldBe('gl.drawingBufferWidth', 'gl.canvas.width');
+    shouldBe('gl.drawingBufferHeight', 'gl.canvas.height');
+    return gl.getParameter(gl.MAX_VIEWPORT_DIMS);
+  }
 }
+
+function test(desiredWidth, desiredHeight) {
+  debug("");
+  debug("testing canvas width = " + desiredWidth + ", height = " + desiredHeight);
+
+  // Make a fresh canvas.
+  var canvas = document.createElement("canvas");
+  canvas.width = desiredWidth;
+  canvas.height = desiredHeight;
+
+  // This 'gl' must be global for shouldBe to work.
+  gl = wtu.create3DContext(canvas, {antialias: false});
+  if (!gl) {
+    testFailed("context does not exist");
+  } else {
+    testPassed("context exists");
+
+    // Verify these stats didn't change since they come from a different
+    // context.
+    shouldBe('gl.getParameter(gl.MAX_VIEWPORT_DIMS)[0]', 'maxSize[0]');
+    shouldBe('gl.getParameter(gl.MAX_VIEWPORT_DIMS)[1]', 'maxSize[1]');
+
+    // check the initial viewport matches the drawingBufferWidth and drawingBufferHeight
+    shouldBe('gl.getParameter(gl.VIEWPORT)[0]', '0');
+    shouldBe('gl.getParameter(gl.VIEWPORT)[1]', '0');
+    shouldBe('gl.getParameter(gl.VIEWPORT)[2]', 'gl.drawingBufferWidth');
+    shouldBe('gl.getParameter(gl.VIEWPORT)[3]', 'gl.drawingBufferHeight');
+
+    debug("");
+    debug("testing resizing canvas to width = " + desiredWidth + ", height = " + desiredHeight);
+
+    oldViewport = gl.getParameter(gl.VIEWPORT);
+
+    // flip width and height
+    canvas.width = desiredHeight;
+    canvas.height = desiredWidth;
+
+    // Verify the viewport didn't change.
+    shouldBe('gl.getParameter(gl.VIEWPORT)[0]', 'oldViewport[0]');
+    shouldBe('gl.getParameter(gl.VIEWPORT)[1]', 'oldViewport[1]');
+    shouldBe('gl.getParameter(gl.VIEWPORT)[2]', 'oldViewport[2]');
+    shouldBe('gl.getParameter(gl.VIEWPORT)[3]', 'oldViewport[3]');
+
+    // fix the viewport
+//    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+
+    shouldBe('gl.getError()', 'gl.NO_ERROR');
+  }
+}
+
+var wtu = WebGLTestUtils;
+var maxSize = getMaxViewportDimensions();
+debug("MAX_VIEWPORT_DIMS: " + maxSize[0] + ", " + maxSize[1]);
+
+shouldBeTrue('maxSize[0] > 0');
+shouldBeTrue('maxSize[1] > 0');
+
+// test a small size to make sure it works at all.
+test(16, 32);
+
+// Make a canvas slightly larger than the max size WebGL can handle.
+// From section 2.2 of the spec the WebGL implementation should allow this to work.
+
+// test a size larger than MAX_VIEWPORT_DIMS in both dimensions
+test(maxSize[0] + 32, 8);
+
 debug("")
 successfullyParsed = true;
 </script>

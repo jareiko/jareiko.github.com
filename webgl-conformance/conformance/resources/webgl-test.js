@@ -1,26 +1,24 @@
 /*
-Copyright (C) 2011 Apple Computer, Inc.  All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions
-are met:
-1. Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
-2. Redistributions in binary form must reproduce the above copyright
-   notice, this list of conditions and the following disclaimer in the
-   documentation and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY APPLE COMPUTER, INC. ``AS IS'' AND ANY
-EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL APPLE COMPUTER, INC. OR
-CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
-OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+** Copyright (c) 2012 The Khronos Group Inc.
+**
+** Permission is hereby granted, free of charge, to any person obtaining a
+** copy of this software and/or associated documentation files (the
+** "Materials"), to deal in the Materials without restriction, including
+** without limitation the rights to use, copy, modify, merge, publish,
+** distribute, sublicense, and/or sell copies of the Materials, and to
+** permit persons to whom the Materials are furnished to do so, subject to
+** the following conditions:
+**
+** The above copyright notice and this permission notice shall be included
+** in all copies or substantial portions of the Materials.
+**
+** THE MATERIALS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+** EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+** MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+** IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+** CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+** TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+** MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
 */
 
 function webglTestLog(msg) {
@@ -158,14 +156,17 @@ function shouldGenerateGLError(ctx, glErrors, evalStr) {
     testFailed(evalStr + " threw exception " + exception);
   } else {
     var err = ctx.getError();
+    var errStrs = [];
+    for (var ii = 0; ii < glErrors.length; ++ii) {
+      errStrs.push(getGLErrorAsString(ctx, glErrors[ii]));
+    }
+    var expected = errStrs.join(" or ");
     if (glErrors.indexOf(err) < 0) {
-      var errStrs = [];
-      for (var ii = 0; ii < glErrors.length; ++ii) {
-        errStrs.push(getGLErrorAsString(ctx, glErrors[ii]));
-      }
-      testFailed(evalStr + " expected: " + errStrs.join(" or ") + ". Was " + getGLErrorAsString(ctx, err) + ".");
+      testFailed(evalStr + " expected: " + expected + ". Was " + getGLErrorAsString(ctx, err) + ".");
     } else {
-      testPassed(evalStr + " generated expected GL error: " + getGLErrorAsString(ctx, err) + ".");
+      var msg = (glErrors.length == 1) ? " generated expected GL error: " :
+                                         " generated one of expected GL errors: ";
+      testPassed(evalStr + msg + expected + ".");
     }
   }
 }
@@ -185,21 +186,17 @@ function glErrorShouldBe(gl, glErrors, opt_msg) {
   opt_msg = opt_msg || "";
   var err = gl.getError();
   var ndx = glErrors.indexOf(err);
+  var errStrs = [];
+  for (var ii = 0; ii < glErrors.length; ++ii) {
+    errStrs.push(getGLErrorAsString(gl, glErrors[ii]));
+  }
+  var expected = errStrs.join(" or ");
   if (ndx < 0) {
-    if (glErrors.length == 1) {
-      testFailed("getError expected: " + getGLErrorAsString(gl, glErrors[0]) +
-                 ". Was " + getGLErrorAsString(gl, err) + " : " + opt_msg);
-    } else {
-      var errs = [];
-      for (var ii = 0; ii < glErrors.length; ++ii) {
-        errs.push(getGLErrorAsString(gl, glErrors[ii]));
-      }
-      testFailed("getError expected one of: [" + errs.join(", ") +
-                 "]. Was " + getGLErrorAsString(gl, err) + " : " + opt_msg);
-    }
+    var msg = "getError expected" + ((glErrors.length > 1) ? " one of: " : ": ");
+    testFailed(msg + expected +  ". Was " + getGLErrorAsString(gl, err) + " : " + opt_msg);
   } else {
-    testPassed("getError was expected value: " +
-                getGLErrorAsString(gl, err) + " : " + opt_msg);
+    var msg = "getError was " + ((glErrors.length > 1) ? "one of: " : "expected value: ");
+    testPassed(msg + expected + " : " + opt_msg);
   }
 };
 
@@ -269,16 +266,10 @@ function createProgram(gl, vshaders, fshaders, attribs)
 // Initialize the Canvas element with the passed name as a WebGL object and return the
 // WebGLRenderingContext.
 //
-// Load shaders with the passed names and create a program with them. Return this program
-// in the 'program' property of the returned context.
-//
-// For each string in the passed attribs array, bind an attrib with that name at that index.
-// Once the attribs are bound, link the program and then use it.
-//
-// Set the clear color to the passed array (4 values) and set the clear depth to the passed value.
+// Set the clear color to [0,0,0,1] and the depth to 1.
 // Enable depth testing and blending with a blend func of (SRC_ALPHA, ONE_MINUS_SRC_ALPHA)
 //
-function initWebGL(canvasName, vshader, fshader, attribs, clearColor, clearDepth, contextAttribs)
+function initWebGL(canvasName, contextAttribs)
 {
     var canvas = document.getElementById(canvasName);
     var gl = create3DContext(canvas, contextAttribs);
@@ -287,15 +278,8 @@ function initWebGL(canvasName, vshader, fshader, attribs, clearColor, clearDepth
         return null;
     }
 
-    // Create the program object
-    gl.program = createProgram(gl, vshader, fshader, attribs);
-    if (!gl.program)
-        return null;
-
-    gl.useProgram(gl.program);
-
-    gl.clearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);
-    gl.clearDepth(clearDepth);
+    gl.clearColor(0, 0, 0, 1);
+    gl.clearDepth(1);
 
     gl.enable(gl.DEPTH_TEST);
     gl.enable(gl.BLEND);
@@ -303,6 +287,25 @@ function initWebGL(canvasName, vshader, fshader, attribs, clearColor, clearDepth
 
     return gl;
 }
+
+//
+// setupProgram
+//
+// Load shaders with the passed names and create a program with them.
+//
+// For each string in the passed attribs array, bind an attrib with that name at that index.
+// Once the attribs are bound, link the program and then use it.
+function setupProgram(gl, vshader, fshader, attribs)
+{
+  // Create the program object
+  var program = createProgram(gl, vshader, fshader, attribs);
+  if (!program)
+      return null;
+
+  gl.useProgram(program);
+  return program;
+}
+
 
 //
 // getShaderSource

@@ -1,8 +1,30 @@
 ﻿<!--
-Copyright (c) 2011 The Chromium Authors. All rights reserved.
-Use of this source code is governed by a BSD-style license that can be
-found in the LICENSE file.
- -->
+
+/*
+** Copyright (c) 2012 The Khronos Group Inc.
+**
+** Permission is hereby granted, free of charge, to any person obtaining a
+** copy of this software and/or associated documentation files (the
+** "Materials"), to deal in the Materials without restriction, including
+** without limitation the rights to use, copy, modify, merge, publish,
+** distribute, sublicense, and/or sell copies of the Materials, and to
+** permit persons to whom the Materials are furnished to do so, subject to
+** the following conditions:
+**
+** The above copyright notice and this permission notice shall be included
+** in all copies or substantial portions of the Materials.
+**
+** THE MATERIALS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+** EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+** MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+** IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+** CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+** TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+** MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
+*/
+
+-->
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -22,8 +44,22 @@ found in the LICENSE file.
 <div id="description"></div>
 <canvas id="canvas" style="width: 50px; height: 50px;"> </canvas>
 <div id="console"></div>
-<!-- Shaders for testing standard derivatives -->
-
+<script id="vshader", type="x-shader/x-vertex">
+attribute vec4 a_position;
+attribute vec4 a_color;
+varying vec4 v_color;
+void main(void) {
+    gl_Position = a_position;
+    v_color = a_color;
+}
+</script>
+<script id="fshader", type="x-shader/x-fragment">
+precision mediump float;
+varying vec4 v_color;
+void main(void) {
+    gl_FragColor = v_color;
+}
+</script>
 <script>
 description("This test verifies the functionality of the OES_vertex_array_object extension, if it is available.");
 
@@ -64,6 +100,9 @@ if (!gl) {
         runAttributeTests();
         runAttributeValueTests();
         runDrawTests();
+        runDeleteTests();
+        runArrayBufferBindTests();
+        glErrorShouldBe(gl, gl.NO_ERROR, "there should be no errors");
     }
 }
 
@@ -171,13 +210,14 @@ function runAttributeTests() {
         var vao = state.vao = ext.createVertexArrayOES();
         ext.bindVertexArrayOES(vao);
         
-        if (n % 2 == 0) {
+        var enableArray = (n % 2 == 0);
+        if (enableArray) {
             gl.enableVertexAttribArray(n);
         } else {
             gl.disableVertexAttribArray(n);
         }
         
-        if (n % 2 == 0) {
+        if (enableArray) {
             var buffer = state.buffer = gl.createBuffer();
             gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
             gl.bufferData(gl.ARRAY_BUFFER, 1024, gl.STATIC_DRAW);
@@ -185,7 +225,7 @@ function runAttributeTests() {
             gl.vertexAttribPointer(n, 1 + n % 4, gl.FLOAT, true, n * 4, n * 4);
         }
         
-        if (n % 2 == 0) {
+        if (enableArray) {
             var elbuffer = state.elbuffer = gl.createBuffer();
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, elbuffer);
             gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, 1024, gl.STATIC_DRAW);
@@ -200,16 +240,15 @@ function runAttributeTests() {
         
         ext.bindVertexArrayOES(state.vao);
         
+        var shouldBeEnabled = (n % 2 == 0);
         var isEnabled = gl.getVertexAttrib(n, gl.VERTEX_ATTRIB_ARRAY_ENABLED);
-        if ((n % 2 == 1) || isEnabled) {
-            // Valid
-        } else {
+        if (shouldBeEnabled != isEnabled) {
             testFailed("VERTEX_ATTRIB_ARRAY_ENABLED not preserved");
             anyMismatch = true;
         }
         
         var buffer = gl.getVertexAttrib(n, gl.VERTEX_ATTRIB_ARRAY_BUFFER_BINDING);
-        if (n % 2 == 0) {
+        if (shouldBeEnabled) {
             if (buffer == state.buffer) {
                 // Matched
                 if ((gl.getVertexAttrib(n, gl.VERTEX_ATTRIB_ARRAY_SIZE) == 1 + n % 4) &&
@@ -235,7 +274,7 @@ function runAttributeTests() {
         }
         
         var elbuffer = gl.getParameter(gl.ELEMENT_ARRAY_BUFFER_BINDING);
-        if (n % 2 == 0) {
+        if (shouldBeEnabled) {
             if (elbuffer == state.elbuffer) {
                 // Matched
             } else {
@@ -399,6 +438,206 @@ function runDrawTests() {
     ext.bindVertexArrayOES(null);
     ext.deleteVertexArrayOES(vao0);
     ext.deleteVertexArrayOES(vao1);
+
+    // Draw with values.
+    var positionLoc = 0;
+    var colorLoc = 1;
+    var gridRes = 1;
+    wtu.setupQuad(gl, gridRes, positionLoc);
+    // Set the vertex color to red.
+    gl.vertexAttrib4f(colorLoc, 1, 0, 0, 1);
+
+    var vao0 = ext.createVertexArrayOES();
+    ext.bindVertexArrayOES(vao0);
+    var program = wtu.setupSimpleVertexColorProgram(gl, positionLoc, colorLoc);
+    wtu.setupQuad(gl, gridRes, positionLoc);
+    // Set the vertex color to green.
+    gl.vertexAttrib4f(colorLoc, 0, 1, 0, 1);
+    wtu.drawIndexedQuad(gl, gridRes);
+    wtu.checkCanvas(gl, [0, 255, 0, 255], "should be green")
+    ext.deleteVertexArrayOES(vao0);
+    wtu.drawIndexedQuad(gl, gridRes);
+    wtu.checkCanvas(gl, [0, 255, 0, 255], "should be green")
+}
+
+function runDeleteTests() {
+    debug("Testing using deleted buffers referenced by VAOs");
+
+    var program = wtu.setupProgram(gl, ["vshader", "fshader"], ["a_position", "a_color"]);
+    gl.useProgram(program);
+
+    var positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array([
+           1.0,  1.0,
+          -1.0,  1.0,
+          -1.0, -1.0,
+           1.0, -1.0]),
+        gl.STATIC_DRAW);
+
+    var colors = [
+      [255,   0,   0, 255],
+      [  0, 255,   0, 255],
+      [  0,   0, 255, 255],
+      [  0, 255, 255, 255]
+    ];
+    var colorBuffers = [];
+    var elementBuffers = [];
+    var vaos = [];
+    for (var ii = 0; ii < colors.length; ++ii) {
+      var vao = ext.createVertexArrayOES();
+      vaos.push(vao);
+      ext.bindVertexArrayOES(vao);
+      // Set the position buffer
+      gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+      gl.enableVertexAttribArray(0);
+      gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+
+      var elementBuffer = gl.createBuffer();
+      elementBuffers.push(elementBuffer);
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, elementBuffer);
+      gl.bufferData(
+          gl.ELEMENT_ARRAY_BUFFER,
+          new Uint8Array([0, 1, 2, 0, 2, 3]),
+          gl.STATIC_DRAW);
+
+      // Setup the color attrib
+      var color = colors[ii];
+      if (ii < 3) {
+        var colorBuffer = gl.createBuffer();
+        colorBuffers.push(colorBuffer);
+        gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Uint8Array(
+          [ color[0], color[1], color[2], color[3],
+            color[0], color[1], color[2], color[3],
+            color[0], color[1], color[2], color[3],
+            color[0], color[1], color[2], color[3]
+          ]), gl.STATIC_DRAW);
+        gl.enableVertexAttribArray(1);
+        gl.vertexAttribPointer(1, 4, gl.UNSIGNED_BYTE, true, 0, 0);
+      } else {
+        gl.vertexAttrib4f(1, color[0] / 255, color[1] / 255, color[2] / 255, color[3] / 255);
+      }
+    }
+
+    // delete the color buffers AND the position buffer.
+    ext.bindVertexArrayOES(null);
+    for (var ii = 0; ii < colorBuffers.length; ++ii) {
+      gl.deleteBuffer(colorBuffers[ii]);
+      gl.deleteBuffer(elementBuffers[ii]);
+      // The buffers should still be valid at this point, since it was attached to the VAO
+      if(!gl.isBuffer(colorBuffers[ii])) {
+        testFailed("buffer removed too early");
+      }
+    }
+    gl.deleteBuffer(positionBuffer);
+
+    // Render with the deleted buffers. As they are referenced by VAOs they
+    // must still be around.
+    for (var ii = 0; ii < colors.length; ++ii) {
+      var color = colors[ii];
+      ext.bindVertexArrayOES(vaos[ii]);
+      gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0);
+      wtu.checkCanvas(gl, color, "should be " + color);
+    }
+
+    // Clean up.
+    for (var ii = 0; ii < colorBuffers.length; ++ii) {
+      ext.deleteVertexArrayOES(vaos[ii]);
+    }
+
+    for (var ii = 0; ii < colorBuffers.length; ++ii) {
+      // The buffers should no longer be valid now that the VAOs are deleted
+      if(gl.isBuffer(colorBuffers[ii])) {
+        testFailed("buffer not properly cleaned up after VAO deletion");
+      }
+    }
+}
+
+function runArrayBufferBindTests() {
+    debug("Testing that VAOs don't effect ARRAY_BUFFER binding.");
+
+    ext.bindVertexArrayOES(null);
+
+    var program = wtu.setupProgram(gl, ["vshader", "fshader"], ["a_color", "a_position"]);
+    gl.useProgram(program);
+
+    // create shared element buuffer
+    var elementBuffer = gl.createBuffer();
+    // bind to default
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, elementBuffer);
+    gl.bufferData(
+        gl.ELEMENT_ARRAY_BUFFER,
+        new Uint8Array([0, 1, 2, 0, 2, 3]),
+        gl.STATIC_DRAW);
+
+    // first create the buffers for no vao draw.
+    var nonVAOColorBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, nonVAOColorBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Uint8Array(
+      [ 0, 255, 0, 255,
+        0, 255, 0, 255,
+        0, 255, 0, 255,
+        0, 255, 0, 255,
+      ]), gl.STATIC_DRAW);
+
+    // shared position buffer.
+    var positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array([
+           1.0,  1.0,
+          -1.0,  1.0,
+          -1.0, -1.0,
+           1.0, -1.0]),
+        gl.STATIC_DRAW);
+
+    // attach position buffer to default
+    gl.enableVertexAttribArray(1);
+    gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 0, 0);
+
+    // now create vao
+    var vao = ext.createVertexArrayOES();
+    ext.bindVertexArrayOES(vao);
+
+    // attach the position buffer vao
+    gl.enableVertexAttribArray(1);
+    gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 0, 0);
+
+    var vaoColorBuffer = gl.createBuffer();
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 4, gl.UNSIGNED_BYTE, true, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, vaoColorBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Uint8Array(
+      [ 255, 0, 0, 255,
+        255, 0, 0, 255,
+        255, 0, 0, 255,
+        255, 0, 0, 255,
+      ]), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 4, gl.UNSIGNED_BYTE, true, 0, 0);
+
+    // now set the buffer back to the nonVAOColorBuffer
+    gl.bindBuffer(gl.ARRAY_BUFFER, nonVAOColorBuffer);
+
+    // bind to vao
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, elementBuffer);
+    gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0);
+    wtu.checkCanvas(gl, [255, 0, 0, 255], "should be red");
+
+    // unbind vao
+    ext.bindVertexArrayOES(null);
+
+    // At this point the nonVAOColorBuffer should be still be bound.
+    // If the WebGL impl is emulating VAOs it must make sure
+    // it correctly restores this binding.
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 4, gl.UNSIGNED_BYTE, true, 0, 0);
+    gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0);
+    wtu.checkCanvas(gl, [0, 255, 0, 255], "should be green");
 }
 
 debug("");

@@ -1,8 +1,30 @@
 ﻿<!--
-Copyright (c) 2012 The Chromium Authors. All rights reserved.
-Use of this source code is governed by a BSD-style license that can be
-found in the LICENSE file.
- -->
+
+/*
+** Copyright (c) 2012 The Khronos Group Inc.
+**
+** Permission is hereby granted, free of charge, to any person obtaining a
+** copy of this software and/or associated documentation files (the
+** "Materials"), to deal in the Materials without restriction, including
+** without limitation the rights to use, copy, modify, merge, publish,
+** distribute, sublicense, and/or sell copies of the Materials, and to
+** permit persons to whom the Materials are furnished to do so, subject to
+** the following conditions:
+**
+** The above copyright notice and this permission notice shall be included
+** in all copies or substantial portions of the Materials.
+**
+** THE MATERIALS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+** EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+** MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+** IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+** CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+** TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+** MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
+*/
+
+-->
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -94,10 +116,7 @@ if (!gl) {
     runTestDisabled();
 
     // Query the extension and store globally so shouldBe can access it
-    ext = gl.getExtension("WEBGL_compressed_texture_s3tc");
-    if (!ext) {
-        ext = gl.getExtension("WEBKIT_WEBGL_compressed_texture_s3tc");
-    }
+    ext = wtu.getExtensionWithKnownPrefixes(gl, "WEBGL_compressed_texture_s3tc");
     if (!ext) {
         testPassed("No WEBGL_compressed_texture_s3tc support -- this is legal");
         runSupportedTest(false);
@@ -110,9 +129,8 @@ if (!gl) {
 }
 
 function runSupportedTest(extensionEnabled) {
-    var supported = gl.getSupportedExtensions();
-    if (supported.indexOf("WEBGL_compressed_texture_s3tc") >= 0 ||
-        supported.indexOf("WEBKIT_WEBGL_compressed_texture_s3tc") >= 0) {
+    var name = wtu.getSupportedExtensionWithKnownPrefixes(gl, "WEBGL_compressed_texture_s3tc");
+    if (name !== undefined) {
         if (extensionEnabled) {
             testPassed("WEBGL_compressed_texture_s3tc listed as supported and getExtension succeeded");
         } else {
@@ -419,6 +437,7 @@ function testDXTTexture(test) {
     canvas.height = height;
     gl.viewport(0, 0, width, height);
     debug("testing " + formatToString(format) + " " + width + "x" + height);
+
     var tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -427,6 +446,8 @@ function testDXTTexture(test) {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.compressedTexImage2D(gl.TEXTURE_2D, 0, format, width, height, 0, data);
     glErrorShouldBe(gl, gl.NO_ERROR, "uploading compressed texture");
+    gl.generateMipmap(gl.TEXTURE_2D);
+    glErrorShouldBe(gl, gl.INVALID_OPERATION, "trying to generate mipmaps from compressed texture");
     wtu.drawQuad(gl);
     compareRect(width, height, test.channels, width, height, uncompressedData, data, format);
 
@@ -538,8 +559,8 @@ function makeImage(imageWidth, imageHeight, dataWidth, data, alpha) {
     c.width = imageWidth * scale;
     c.height = imageHeight * scale;
     var ctx = c.getContext("2d");
-    for (var yy = 0; yy < imageWidth; ++yy) {
-        for (var xx = 0; xx < imageHeight; ++xx) {
+    for (var yy = 0; yy < imageHeight; ++yy) {
+        for (var xx = 0; xx < imageWidth; ++xx) {
             var offset = (yy * dataWidth + xx) * 4;
             ctx.fillStyle = "rgba(" +
                     data[offset + 0] + "," +

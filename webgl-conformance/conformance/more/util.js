@@ -1,28 +1,28 @@
 /*
 Utilities for the OpenGL ES 2.0 HTML Canvas context
+*/
 
-Copyright (C) 2011  Ilmari Heikkinen <ilmari.heikkinen@gmail.com>
-
-Permission is hereby granted, free of charge, to any person
-obtaining a copy of this software and associated documentation
-files (the "Software"), to deal in the Software without
-restriction, including without limitation the rights to use,
-copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following
-conditions:
-
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-OTHER DEALINGS IN THE SOFTWARE.
+/*
+** Copyright (c) 2012 The Khronos Group Inc.
+**
+** Permission is hereby granted, free of charge, to any person obtaining a
+** copy of this software and/or associated documentation files (the
+** "Materials"), to deal in the Materials without restriction, including
+** without limitation the rights to use, copy, modify, merge, publish,
+** distribute, sublicense, and/or sell copies of the Materials, and to
+** permit persons to whom the Materials are furnished to do so, subject to
+** the following conditions:
+**
+** The above copyright notice and this permission notice shall be included
+** in all copies or substantial portions of the Materials.
+**
+** THE MATERIALS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+** EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+** MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+** IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+** CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+** TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+** MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
 */
 
 function loadTexture(gl, elem, mipmaps) {
@@ -1010,7 +1010,7 @@ function assertGLError(gl, err, name, f) {
   try { f(); } catch(e) { r=true; glErr = e.glError; }
   if (glErr !== err) {
     if (glErr === undefined) {
-      testFailed("assertGLError: UNEXPCETED EXCEPTION", name, f);
+      testFailed("assertGLError: UNEXPECTED EXCEPTION", name, f);
     } else {
       testFailed("assertGLError: expected: " + getGLErrorAsString(gl, err) +
                  " actual: " + getGLErrorAsString(gl, glErr), name, f);
@@ -1030,7 +1030,7 @@ function assertSomeGLError(gl, name, f) {
   try { f(); } catch(e) { r=true; glErr = e.glError; }
   if (glErr === 0) {
     if (glErr === undefined) {
-      testFailed("assertGLError: UNEXPCETED EXCEPTION", name, f);
+      testFailed("assertGLError: UNEXPECTED EXCEPTION", name, f);
     } else {
       testFailed("assertGLError: expected: " + getGLErrorAsString(gl, err) +
                  " actual: " + getGLErrorAsString(gl, glErr), name, f);

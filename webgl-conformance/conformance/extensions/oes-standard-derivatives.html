@@ -1,8 +1,30 @@
 ﻿<!--
-Copyright (c) 2011 The Chromium Authors. All rights reserved.
-Use of this source code is governed by a BSD-style license that can be
-found in the LICENSE file.
- -->
+
+/*
+** Copyright (c) 2012 The Khronos Group Inc.
+**
+** Permission is hereby granted, free of charge, to any person obtaining a
+** copy of this software and/or associated documentation files (the
+** "Materials"), to deal in the Materials without restriction, including
+** without limitation the rights to use, copy, modify, merge, publish,
+** distribute, sublicense, and/or sell copies of the Materials, and to
+** permit persons to whom the Materials are furnished to do so, subject to
+** the following conditions:
+**
+** The above copyright notice and this permission notice shall be included
+** in all copies or substantial portions of the Materials.
+**
+** THE MATERIALS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+** EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+** MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+** IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+** CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+** TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+** MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
+*/
+
+-->
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -83,7 +105,7 @@ void main() {
     float dzdx = dFdx(position.z);
     float dzdy = dFdy(position.z);
     float fw = fwidth(position.z);
-    gl_FragColor = vec4(abs(dzdx), abs(dzdy), fw, 1.0);
+    gl_FragColor = vec4(abs(dzdx) * 40.0, abs(dzdy) * 40.0, fw * 40.0, 1.0);
 }
 </script>
 
@@ -244,9 +266,9 @@ function runOutputTests() {
     //    dFdx = totalChange.x / canvas.width  = 0.5 / 50.0 = 0.01
     //    dFdy = totalChange.y / canvas.height = 0.5 / 50.0 = 0.01
     //    fw = abs(dFdx + dFdy) = 0.01 + 0.01 = 0.02
-    //    r = floor(dFdx * 255) = 3
-    //    g = floor(dFdy * 255) = 3
-    //    b = floor(fw * 255) = 5
+    //    r = floor(dFdx * 40.0 * 255) = 102
+    //    g = floor(dFdy * 40.0 * 255) = 102
+    //    b = floor(fw * 40.0 * 255) = 204
 
     var e = 2; // Amount of variance to allow in result pixels - may need to be tweaked higher
 
@@ -321,55 +343,33 @@ function runOutputTests() {
     // Draw 2: (variation in x)
     setupBuffers(1.0, 0.0, 1.0, 0.0);
     wtu.drawQuad(gl);
-    expectResult([5, 0, 5, 255],
+    expectResult([204, 0, 204, 255],
                  "Draw 2 (variation in x) returned the correct data",
                  "Draw 2 (variation in x) returned incorrect data");
 
     // Draw 3: (variation in y)
     setupBuffers(1.0, 1.0, 0.0, 0.0);
     wtu.drawQuad(gl);
-    expectResult([0, 5, 5, 255],
+    expectResult([0, 204, 204, 255],
                  "Draw 3 (variation in y) returned the correct data",
                  "Draw 3 (variation in y) returned incorrect data");
 
     // Draw 4: (variation in x & y)
     setupBuffers(1.0, 0.5, 0.5, 0.0);
     wtu.drawQuad(gl);
-    expectResult([3, 3, 5, 255],
+    expectResult([102, 102, 204, 255],
                  "Draw 4 (variation in x & y) returned the correct data",
                  "Draw 4 (variation in x & y) returned incorrect data");
 
-}
-
-function attemptToForceGC()
-{
-    var holderArray = [];
-    var tempArray;
-    window.tempArray = holderArray;
-    for (var i = 0; i < 12; ++i) {
-        tempArray = [];
-        for (var j = 0; j < 1024 * 1024; ++j) {
-            tempArray.push(0);
-        }
-        holderArray.push(tempArray);
-    }
-    window.tempArray = null;
 }
 
 function runUniqueObjectTest()
 {
     debug("Testing that getExtension() returns the same object each time");
     gl.getExtension("OES_standard_derivatives").myProperty = 2;
-    if (window.GCController) {
-        window.GCController.collect();
-    } else if (window.opera && window.opera.collect) {
-        window.opera.collect();
-    } else {
-        attemptToForceGC();
-    }
+    gc();
     shouldBe('gl.getExtension("OES_standard_derivatives").myProperty', '2');
 }
-
 
 debug("");
 successfullyParsed = true;

@@ -8,21 +8,26 @@ glsl-long-variable-names.html
 non-ascii-comments.vert.html
 non-ascii.vert.html
 --min-version 1.0.2 re-compile-re-link.html
+--min-version 1.0.2 shader-with-256-character-define.html
 shader-with-256-character-identifier.frag.html
+--min-version 1.0.2 shader-with-257-character-define.html
 shader-with-257-character-identifier.frag.html
 shader-with-_webgl-identifier.vert.html
 shader-with-arbitrary-indexing.frag.html
 shader-with-arbitrary-indexing.vert.html
+--min-version 1.0.2 shader-with-array-of-structs-containing-arrays.html
+--min-version 1.0.2 shader-with-array-of-structs-uniform.html
 shader-with-attrib-array.vert.html
 shader-with-attrib-struct.vert.html
 shader-with-clipvertex.vert.html
 --min-version 1.0.2 shader-with-conditional-scoping.html
+--min-version 1.0.2 shader-with-conditional-scoping-negative.html
 shader-with-default-precision.frag.html
 shader-with-default-precision.vert.html
 shader-with-define-line-continuation.frag.html
 shader-with-dfdx-no-ext.frag.html
 shader-with-dfdx.frag.html
---min-version 1.0.2 shader-with-do-scoping.html
+--min-version 1.0.2 shader-with-do-loop.html
 shader-with-error-directive.html
 shader-with-explicit-int-cast.vert.html
 shader-with-float-return-value.frag.html
@@ -49,8 +54,12 @@ shader-with-limited-indexing.frag.html
 --min-version 1.0.2 shader-with-hex-int-constant-macro.html
 shader-with-long-line.html
 shader-with-non-ascii-error.frag.html
+--min-version 1.0.2 shader-with-non-reserved-words.html
 shader-with-precision.frag.html
 shader-with-quoted-error.frag.html
+--min-version 1.0.2 shader-with-reserved-words.html
+--min-version 1.0.2 shader-with-similar-uniform-array-names.html
+--min-version 1.0.2 shader-with-too-many-uniforms.html
 shader-with-undefined-preprocessor-symbol.frag.html
 shader-with-uniform-in-loop-condition.vert.html
 shader-with-vec2-return-value.frag.html
@@ -62,8 +71,11 @@ shader-with-version-100.vert.html
 shader-with-version-120.vert.html
 shader-with-version-130.vert.html
 shader-with-webgl-identifier.vert.html
+--min-version 1.0.2 shader-with-while-loop.html
 shader-without-precision.frag.html
 shared.html
 struct-nesting-exceeds-maximum.html
 struct-nesting-under-maximum.html
 uniform-location-length-limits.html
+--min-version 1.0.2 shader-with-short-circuiting-operators.html
+--min-version 1.0.2 shader-with-global-variable-precision-mismatch.html

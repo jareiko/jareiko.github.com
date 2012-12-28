@@ -1,26 +1,24 @@
 /*
-Copyright (C) 2009 Apple Computer, Inc.  All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions
-are met:
-1. Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
-2. Redistributions in binary form must reproduce the above copyright
-   notice, this list of conditions and the following disclaimer in the
-   documentation and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY APPLE COMPUTER, INC. ``AS IS'' AND ANY
-EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL APPLE COMPUTER, INC. OR
-CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
-OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+** Copyright (c) 2012 The Khronos Group Inc.
+**
+** Permission is hereby granted, free of charge, to any person obtaining a
+** copy of this software and/or associated documentation files (the
+** "Materials"), to deal in the Materials without restriction, including
+** without limitation the rights to use, copy, modify, merge, publish,
+** distribute, sublicense, and/or sell copies of the Materials, and to
+** permit persons to whom the Materials are furnished to do so, subject to
+** the following conditions:
+**
+** The above copyright notice and this permission notice shall be included
+** in all copies or substantial portions of the Materials.
+**
+** THE MATERIALS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+** EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+** MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+** IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+** CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+** TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+** MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
 */
 
 // WebKit Specfic code.  Add your own here.
@@ -42,18 +40,21 @@ function nonKhronosFrameworkNotifyDone() {
 
 function reportTestResultsToHarness(success, msg) {
   if (window.parent.webglTestHarness) {
-    window.parent.webglTestHarness.reportResults(success, msg);
+    window.parent.webglTestHarness.reportResults(window.location.pathname, success, msg);
   }
 }
 
 function notifyFinishedToHarness() {
   if (window.parent.webglTestHarness) {
-    window.parent.webglTestHarness.notifyFinished();
+    window.parent.webglTestHarness.notifyFinished(window.location.pathname);
   }
 }
 
 function description(msg)
 {
+    if (msg === undefined) {
+      msg = document.title;
+    }
     // For MSIE 6 compatibility
     var span = document.createElement("span");
     span.innerHTML = '<p>' + msg + '</p><p>On success, you will see a series of "<span class="pass">PASS</span>" messages, followed by "<span class="pass">TEST COMPLETE</span>".</p>';
@@ -335,6 +336,14 @@ function shouldBeGreaterThanOrEqual(_a, _b) {
         testPassed(_a + " is >= " + _b);
 }
 
+function expectTrue(v, msg) {
+  if (v) {
+    testPassed(msg);
+  } else {
+    testFailed(msg);
+  }
+}
+
 function shouldThrow(_a, _e)
 {
   var exception;
@@ -360,6 +369,24 @@ function shouldThrow(_a, _e)
     testFailed(_a + " should throw " + (typeof _e == "undefined" ? "an exception" : _ev) + ". Was " + _av + ".");
 }
 
+function shouldBeType(_a, _type) {
+	var exception;
+	var _av;
+	try {
+		_av = eval(_a);
+	} catch (e) {
+		exception = e;
+	}
+
+	var _typev = eval(_type);
+
+	if (_av instanceof _typev) {
+		testPassed(_a + " is an instance of " + _type);
+	} else {
+		testFailed(_a + " is not an instance of " + _type);
+	}
+}
+
 function assertMsg(assertion, msg) {
     if (assertion) {
         testPassed(msg);
@@ -369,19 +396,32 @@ function assertMsg(assertion, msg) {
 }
 
 function gc() {
-    if (typeof GCController !== "undefined")
-        GCController.collect();
-    else {
-        function gcRec(n) {
-            if (n < 1)
-                return {};
-            var temp = {i: "ab" + i + (i / 100000)};
-            temp += "foo";
-            gcRec(n-1);
-        }
-        for (var i = 0; i < 1000; i++)
-            gcRec(10)
+    if (window.GCController) {
+        window.GCController.collect();
+        return;
     }
+
+    if (window.opera && window.opera.collect) {
+        window.opera.collect();
+        return;
+    }
+
+    try {
+        window.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+              .getInterface(Components.interfaces.nsIDOMWindowUtils)
+              .garbageCollect();
+        return;
+    } catch(e) {}
+
+    function gcRec(n) {
+        if (n < 1)
+            return {};
+        var temp = {i: "ab" + i + (i / 100000)};
+        temp += "foo";
+        gcRec(n-1);
+    }
+    for (var i = 0; i < 1000; i++)
+        gcRec(10);
 }
 
 function finishTest() {

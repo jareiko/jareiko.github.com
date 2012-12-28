@@ -2,6 +2,32 @@
 <html>
 <head>
     <meta charset="utf-8">
+<!--
+
+/*
+** Copyright (c) 2012 The Khronos Group Inc.
+**
+** Permission is hereby granted, free of charge, to any person obtaining a
+** copy of this software and/or associated documentation files (the
+** "Materials"), to deal in the Materials without restriction, including
+** without limitation the rights to use, copy, modify, merge, publish,
+** distribute, sublicense, and/or sell copies of the Materials, and to
+** permit persons to whom the Materials are furnished to do so, subject to
+** the following conditions:
+**
+** The above copyright notice and this permission notice shall be included
+** in all copies or substantial portions of the Materials.
+**
+** THE MATERIALS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+** EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+** MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+** IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+** CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+** TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+** MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
+*/
+
+-->
     <title>glsl long variable name mapping tests</title>
     <link rel="stylesheet" href="../../../resources/js-test-style.css"/>
     <script src="../../../resources/js-test-pre.js"></script>
@@ -113,7 +139,8 @@
         description("Verify that shader long variable names works fine if they are within 256 characters.");
 
         debug("Test same long uniform name in both vertex shader and fragment shader");
-        var gl = initWebGL("example", "vshader_shared_uniform", "fshader_shared_uniform", [ "vPosition"], [ 0, 0, 0, 1 ], 1);
+        var gl = initWebGL("example");
+        var program = setupProgram(gl, "vshader_shared_uniform", "fshader_shared_uniform", [ "vPosition"]);
         shouldBeNonNull("gl");
         shouldBe("gl.getError()", "gl.NO_ERROR");
         var prog = gl.getParameter(gl.CURRENT_PROGRAM);
@@ -132,13 +159,12 @@
         debug("");
 
         debug("Test long uniform array name");
-        var gl = initWebGL("example", "vshader_uniform_array", "fshader_uniform_array", [ "vPosition"], [ 0, 0, 0, 1 ], 1);
+        var gl = initWebGL("example");
+        var program = setupProgram(gl, "vshader_uniform_array", "fshader_uniform_array", [ "vPosition"]);
         shouldBeNonNull("gl");
         shouldBe("gl.getError()", "gl.NO_ERROR");
         var prog = gl.getParameter(gl.CURRENT_PROGRAM);
         shouldBeNonNull("prog");
-        var arrayLoc = gl.getUniformLocation(prog, "color01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567");
-        shouldBeNonNull("arrayLoc");
         var redLoc = gl.getUniformLocation(prog, "color01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567[0]");
         shouldBeNonNull("redLoc");
         var greenLoc = gl.getUniformLocation(prog, "color01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567[1]");
@@ -149,27 +175,15 @@
         shouldBe("activeUniform.type", "gl.FLOAT");
         shouldBe("activeUniform.size", "2");
         shouldBe("activeUniform.name", "'color01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567[0]'");
-        debug("Binding each uniform array value by component location...");
         gl.uniform1f(redLoc, 1.0);
         gl.uniform1f(greenLoc, 0.0);
         drawAndCheckPixels(gl);
         shouldBe("gl.getError()", "gl.NO_ERROR");
-        gl.uniform1f(redLoc, 0.5);
-        gl.uniform1f(greenLoc, 0.5);
-        debug("Binding all uniform array values by first component location...");
-        gl.uniform1fv(redLoc, [1.0, 0.0]);
-        drawAndCheckPixels(gl);
-        shouldBe("gl.getError()", "gl.NO_ERROR");
-        gl.uniform1fv(redLoc, [0.5, 0.5]);
-        debug("Binding all uniform array values by array location...");
-        gl.uniform1fv(arrayLoc, [1.0, 0.0]);
-        drawAndCheckPixels(gl);
-        shouldBe("gl.getError()", "gl.NO_ERROR");
-        gl.uniform1fv(arrayLoc, [0.5, 0.5]);
         debug("");
 
         debug("Test long varying name");
-        var gl = initWebGL("example", "vshader_varying", "fshader_varying", [ "vPosition"], [ 0, 0, 0, 1 ], 1);
+        var gl = initWebGL("example");
+        var program = setupProgram(gl, "vshader_varying", "fshader_varying", [ "vPosition"]);
         shouldBeNonNull("gl");
         shouldBe("gl.getError()", "gl.NO_ERROR");
         var prog = gl.getParameter(gl.CURRENT_PROGRAM);
@@ -179,7 +193,8 @@
         debug("");
 
         debug("Test long local variable name");
-        var gl = initWebGL("example", "vshader_varying", "fshader_varying", [ "vPosition"], [ 0, 0, 0, 1 ], 1);
+        var gl = initWebGL("example");
+        var program = setupProgram(gl, "vshader_varying", "fshader_varying", [ "vPosition"]);
         shouldBeNonNull("gl");
         shouldBe("gl.getError()", "gl.NO_ERROR");
         var prog = gl.getParameter(gl.CURRENT_PROGRAM);
@@ -189,7 +204,8 @@
         debug("");
 
         debug("Test long attribute name");
-        var gl = initWebGL("example", "vshader_attrib", "fshader_attrib", [ "vPosition0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456"], [ 0, 0, 0, 1 ], 1);
+        var gl = initWebGL("example");
+        var program = setupProgram(gl, "vshader_attrib", "fshader_attrib", [ "vPosition0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456"]);
         shouldBeNonNull("gl");
         shouldBe("gl.getError()", "gl.NO_ERROR");
         var prog = gl.getParameter(gl.CURRENT_PROGRAM);

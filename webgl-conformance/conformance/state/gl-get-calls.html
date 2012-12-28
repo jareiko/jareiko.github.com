@@ -1,26 +1,28 @@
 <!--
-Copyright (C) 2011 Apple Computer, Inc.  All rights reserved.
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions
-are met:
-1. Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
-2. Redistributions in binary form must reproduce the above copyright
-   notice, this list of conditions and the following disclaimer in the
-   documentation and/or other materials provided with the distribution.
+/*
+** Copyright (c) 2012 The Khronos Group Inc.
+**
+** Permission is hereby granted, free of charge, to any person obtaining a
+** copy of this software and/or associated documentation files (the
+** "Materials"), to deal in the Materials without restriction, including
+** without limitation the rights to use, copy, modify, merge, publish,
+** distribute, sublicense, and/or sell copies of the Materials, and to
+** permit persons to whom the Materials are furnished to do so, subject to
+** the following conditions:
+**
+** The above copyright notice and this permission notice shall be included
+** in all copies or substantial portions of the Materials.
+**
+** THE MATERIALS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+** EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+** MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+** IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+** CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+** TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+** MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
+*/
 
-THIS SOFTWARE IS PROVIDED BY APPLE COMPUTER, INC. ``AS IS'' AND ANY
-EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL APPLE COMPUTER, INC. OR
-CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
-OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
 
 <!DOCTYPE html>
@@ -61,11 +63,14 @@ else {
     debug("");
     debug("Check default values");
     shouldBe('context.getParameter(context.ACTIVE_TEXTURE)', 'context.TEXTURE0');
-	shouldBe('(context.getParameter(context.ALIASED_LINE_WIDTH_RANGE)[0] <= 1) && (context.getParameter(context.ALIASED_LINE_WIDTH_RANGE)[0] > 0) && (context.getParameter(context.ALIASED_LINE_WIDTH_RANGE)[1] >= 1)', 'true');
-	shouldBe('(context.getParameter(context.ALIASED_POINT_SIZE_RANGE)[0] <= 1) && (context.getParameter(context.ALIASED_POINT_SIZE_RANGE)[0] > 0) && (context.getParameter(context.ALIASED_POINT_SIZE_RANGE)[1] >= 1)', 'true');
+    shouldBe('(context.getParameter(context.ALIASED_LINE_WIDTH_RANGE)[0] <= 1) && (context.getParameter(context.ALIASED_LINE_WIDTH_RANGE)[0] > 0) && (context.getParameter(context.ALIASED_LINE_WIDTH_RANGE)[1] >= 1)', 'true');
+    shouldBe('(context.getParameter(context.ALIASED_POINT_SIZE_RANGE)[0] <= 1) && (context.getParameter(context.ALIASED_POINT_SIZE_RANGE)[0] > 0) && (context.getParameter(context.ALIASED_POINT_SIZE_RANGE)[1] >= 1)', 'true');
+    shouldBeType('context.getParameter(context.ALIASED_LINE_WIDTH_RANGE)', 'Float32Array');
+    shouldBeType('context.getParameter(context.ALIASED_POINT_SIZE_RANGE)', 'Float32Array');
     shouldBe('context.getParameter(context.ARRAY_BUFFER_BINDING)', 'null');
     shouldBe('context.getParameter(context.BLEND)', 'false');
     shouldBe('context.getParameter(context.BLEND_COLOR)', '[0, 0, 0, 0]');
+    shouldBeType('context.getParameter(context.BLEND_COLOR)', 'Float32Array');
     shouldBe('context.getParameter(context.BLEND_DST_ALPHA)', '0');
     shouldBe('context.getParameter(context.BLEND_DST_RGB)', '0');
     shouldBe('context.getParameter(context.BLEND_EQUATION_ALPHA)', 'context.FUNC_ADD');
@@ -73,13 +78,16 @@ else {
     shouldBe('context.getParameter(context.BLEND_SRC_ALPHA)', '1');
     shouldBe('context.getParameter(context.BLEND_SRC_RGB)', '1');
     shouldBe('context.getParameter(context.COLOR_CLEAR_VALUE)', '[0, 0, 0, 0]');
+    shouldBeType('context.getParameter(context.COLOR_CLEAR_VALUE)', 'Float32Array');
     shouldBe('context.getParameter(context.COLOR_WRITEMASK)', '[true, true, true, true]');
+    shouldBeType('context.getParameter(context.COMPRESSED_TEXTURE_FORMATS)', 'Uint32Array');
     shouldBe('context.getParameter(context.CULL_FACE)', 'false');
     shouldBe('context.getParameter(context.CULL_FACE_MODE)', 'context.BACK');
     shouldBe('context.getParameter(context.CURRENT_PROGRAM)', 'null');
     shouldBe('context.getParameter(context.DEPTH_CLEAR_VALUE)', '1');
     shouldBe('context.getParameter(context.DEPTH_FUNC)', 'context.LESS');
     shouldBe('context.getParameter(context.DEPTH_RANGE)', '[0, 1]');
+    shouldBeType('context.getParameter(context.DEPTH_RANGE)', 'Float32Array');
     shouldBe('context.getParameter(context.DEPTH_TEST)', 'false');
     shouldBe('context.getParameter(context.DEPTH_WRITEMASK)', 'true');
     shouldBe('context.getParameter(context.DITHER)', 'true');
@@ -87,6 +95,7 @@ else {
     shouldBe('context.getParameter(context.FRONT_FACE)', 'context.CCW');
     shouldBe('context.getParameter(context.GENERATE_MIPMAP_HINT)', 'context.DONT_CARE');
     shouldBe('context.getParameter(context.LINE_WIDTH)', '1');
+    shouldBe('context.getParameter(context.PACK_ALIGNMENT)', '4');
     shouldBe('context.getParameter(context.POLYGON_OFFSET_FACTOR)', '0');
     shouldBe('context.getParameter(context.POLYGON_OFFSET_FILL)', 'false');
     shouldBe('context.getParameter(context.POLYGON_OFFSET_UNITS)', '0');
@@ -95,6 +104,9 @@ else {
     shouldBe('context.getParameter(context.SAMPLE_COVERAGE_VALUE)', '1');
     shouldBe('context.getParameter(context.SCISSOR_BOX)[0]', '0');
     shouldBe('context.getParameter(context.SCISSOR_BOX)[1]', '0');
+    shouldBe('context.getParameter(context.SCISSOR_BOX)[2]', 'context.getParameter(context.VIEWPORT)[2]');
+    shouldBe('context.getParameter(context.SCISSOR_BOX)[3]', 'context.getParameter(context.VIEWPORT)[3]');
+    shouldBeType('context.getParameter(context.SCISSOR_BOX)', Int32Array);
     shouldBe('context.getParameter(context.SCISSOR_TEST)', 'false');
     shouldBe('context.getParameter(context.STENCIL_BACK_FAIL)', 'context.KEEP');
     shouldBe('context.getParameter(context.STENCIL_BACK_FUNC)', 'context.ALWAYS');
@@ -127,7 +139,7 @@ else {
     shouldBe('context.getParameter(context.UNPACK_FLIP_Y_WEBGL)', 'false');
     shouldBe('context.getParameter(context.UNPACK_PREMULTIPLY_ALPHA_WEBGL)', 'false');
     shouldBe('context.getParameter(context.VIEWPORT)', '[0, 0, 2, 2]');
-    shouldBeNonNull('context.getParameter(context.COMPRESSED_TEXTURE_FORMATS)');
+    shouldBeType('context.getParameter(context.VIEWPORT)', 'Int32Array');
 
     shouldBeTrue('context.getParameter(context.MAX_COMBINED_TEXTURE_IMAGE_UNITS) >= 8');
     shouldBeTrue('context.getParameter(context.MAX_CUBE_MAP_TEXTURE_SIZE) >= 16');
@@ -144,6 +156,35 @@ else {
     // especially if there are multiple screens.
     shouldBeTrue('context.getParameter(context.MAX_VIEWPORT_DIMS)[0] >= window.screen.width');
     shouldBeTrue('context.getParameter(context.MAX_VIEWPORT_DIMS)[1] >= window.screen.height');
+    shouldBeType('context.getParameter(context.MAX_VIEWPORT_DIMS)', 'Int32Array');
+
+    debug("");
+    debug("check texture values");
+    var maxTextures = context.getParameter(context.MAX_TEXTURE_IMAGE_UNITS);
+    for (var ii = 0; ii < maxTextures; ++ii) {
+      context.activeTexture(context.TEXTURE0 + ii);
+      debug("check texture unit: " + ii);
+      shouldBe('context.getParameter(context.TEXTURE_BINDING_2D)', 'null');
+      shouldBe('context.getParameter(context.TEXTURE_BINDING_CUBE_MAP)', 'null');
+    }
+
+    debug("");
+    debug("check attrib values");
+    var maxAttribs = context.getParameter(context.MAX_VERTEX_ATTRIBS);
+    for (var ii = 0; ii < maxAttribs; ++ii) {
+      debug("check attrib: " + ii);
+      shouldBe('context.getVertexAttrib(ii, context.VERTEX_ATTRIB_ARRAY_BUFFER_BINDING)', 'null');
+      shouldBe('context.getVertexAttrib(ii, context.VERTEX_ATTRIB_ARRAY_ENABLED)', 'false');
+      shouldBe('context.getVertexAttrib(ii, context.VERTEX_ATTRIB_ARRAY_SIZE)', '4');
+      shouldBe('context.getVertexAttrib(ii, context.VERTEX_ATTRIB_ARRAY_STRIDE)', '0');
+      shouldBe('context.getVertexAttrib(ii, context.VERTEX_ATTRIB_ARRAY_TYPE)', 'context.FLOAT');
+      shouldBe('context.getVertexAttrib(ii, context.VERTEX_ATTRIB_ARRAY_NORMALIZED)', 'false');
+      shouldBe('context.getVertexAttrib(ii, context.CURRENT_VERTEX_ATTRIB)', '[0, 0, 0, 1]');
+      shouldBeType('context.getVertexAttrib(ii, context.CURRENT_VERTEX_ATTRIB)', 'Float32Array');
+      shouldBe('context.getVertexAttribOffset(ii, context.VERTEX_ATTRIB_ARRAY_POINTER)', '0');
+    }
+
+    shouldBe('context.getError()', 'context.NO_ERROR');
 }
 
 debug("");

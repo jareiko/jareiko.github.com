@@ -1,8 +1,30 @@
 <!--
-Copyright (c) 2011 The Chromium Authors. All rights reserved.
-Use of this source code is governed by a BSD-style license that can be
-found in the LICENSE file.
- -->
+
+/*
+** Copyright (c) 2012 The Khronos Group Inc.
+**
+** Permission is hereby granted, free of charge, to any person obtaining a
+** copy of this software and/or associated documentation files (the
+** "Materials"), to deal in the Materials without restriction, including
+** without limitation the rights to use, copy, modify, merge, publish,
+** distribute, sublicense, and/or sell copies of the Materials, and to
+** permit persons to whom the Materials are furnished to do so, subject to
+** the following conditions:
+**
+** The above copyright notice and this permission notice shall be included
+** in all copies or substantial portions of the Materials.
+**
+** THE MATERIALS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+** EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+** MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+** IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+** CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+** TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+** MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
+*/
+
+-->
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -54,6 +76,38 @@ function init()
   shouldBe("canvas.height", "2");
 
   gl = wtu.create3DContext(canvas);
+
+  var tex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.generateMipmap(gl.TEXTURE_2D);
+  glErrorShouldBe(gl, gl.INVALID_OPERATION, "for generateMipmap with mip 0 is 0x0");
+  gl.texImage2D(
+      gl.TEXTURE_2D, 1, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
+      new Uint8Array(4));
+  gl.generateMipmap(gl.TEXTURE_2D);
+  glErrorShouldBe(gl, gl.INVALID_OPERATION, "for generateMipmap with mip 0 is 0x0");
+
+  tex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_CUBE_MAP, tex);
+  gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+  glErrorShouldBe(gl, gl.INVALID_OPERATION, "for generateMipmap with mip 0 is 0x0");
+
+  var faces = [
+    gl.TEXTURE_CUBE_MAP_POSITIVE_X,
+    gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
+    gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
+    gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
+    gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
+    gl.TEXTURE_CUBE_MAP_NEGATIVE_Z
+  ];
+  for (var ii = 0; ii < faces.length; ++ii) {
+    gl.texImage2D(
+        faces[ii], 0, gl.RGBA, 2, 2, 0, gl.RGBA, gl.UNSIGNED_BYTE,
+        new Uint8Array(4 * 2 * 2));
+    gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+    glErrorShouldBe(gl, ii == 5 ? gl.NO_ERROR : gl.INVALID_OPERATION, "for generateMipmap with " + (ii + 1) + " faces");
+  }
+
   wtu.setupUnitQuad(gl, 0, 1);
   var program = wtu.setupProgram(
       gl, ['vshader', 'fshader'], ['vPosition', 'texCoord0'], [0, 1]);
@@ -66,7 +120,8 @@ function init()
     red: [255, 0, 0, 255],
     green:  [0, 255, 0, 255],
     cyan: [128, 255, 255, 255],
-    black: [0, 0, 0, 255]
+    black: [0, 0, 0, 255],
+    blank: [0, 0, 0, 0]
   };
 
   var mips = [
@@ -75,6 +130,17 @@ function init()
   var texLoc = gl.getUniformLocation(program, "tex");
   gl.uniform1i(texLoc, 0);
   var multLoc = gl.getUniformLocation(program, "uMult");
+
+  // ----------------------------------------------------
+  var clearTex = createTexture();
+  gl.uniform4f(multLoc, 1, 1, 1, 1);
+  gl.bindTexture(gl.TEXTURE_2D, clearTex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 16, 16, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+  debug('gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 16, 16, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);');
+  setMipData(0, 16, 'blank');
+  makeDivMipChain();
+  generateMipmap();
+  check('blank', "texture created with null that has all mips");
 
   // ----------------------------------------------------
   var tex = createTexture();
@@ -172,11 +238,11 @@ function init()
   }
 
   function texParameteri(target, pname, value) {
-	debug("gl.texParameteri(" +
+    debug("gl.texParameteri(" +
           wtu.glEnumToString(gl, target) + ", " +
           wtu.glEnumToString(gl, pname) + ", " +
           wtu.glEnumToString(gl, value) + ")")
-	gl.texParameteri(target, pname, value);
+    gl.texParameteri(target, pname, value);
   }
 
   function generateMipmap() {
