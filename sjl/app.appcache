@@ -1,0 +1,24 @@
+CACHE MANIFEST
+# version 20130203
+
+CACHE:
+/javascripts/app.js
+/javascripts/vendor.js
+/sounds/drum41-mod.ogg
+/sounds/vikings.mp3
+/stylesheets/app.css
+/textures/Monsters/Giant/giant_1.png
+/textures/Monsters/Giant/giant_2.png
+/textures/Monsters/Giant/giant_2.png
+/textures/Ship/ship_1.png
+/textures/Tiles/Background/mountain.png
+/textures/Tiles/Background/treegroup1.png
+/textures/Tiles/Background/vikinghouse.png
+/textures/Tiles/Land/landtile1_1.png
+/textures/Tiles/Sea/seatile1_1.png
+/textures/Tiles/Sea/seatile1_2.png
+/textures/Tiles/Shore/shoretile1_1.png
+/textures/Tiles/Shore/shoretile1_2.png
+/textures/Tiles/Sky/sky.png
+/textures/Vikings/viking_1.png
+/textures/Vikings/viking_2.png
